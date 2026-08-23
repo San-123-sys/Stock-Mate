@@ -144,12 +144,12 @@ class ResponseAgent:
         )
 
         style_instruction = _CONCISE_STYLE_INSTRUCTION
-        max_tokens = 260
+        max_tokens = 600
         clamp_words = _MAX_REPLY_WORDS
         clamp_lines = _MAX_REPLY_LINES
         if mode == "explain":
             style_instruction = _EXPLAIN_STYLE_INSTRUCTION
-            max_tokens = 700
+            max_tokens = 1100
             clamp_words = 320
             clamp_lines = 12
 
@@ -158,15 +158,29 @@ class ResponseAgent:
             messages.append({"role": turn["role"], "content": turn["content"]})
         messages.append({"role": "user", "content": cleaned_user_message})
 
+        # gpt-oss models are reasoning models that spend tokens on hidden chain-of-thought
+        # before writing the reply; keep reasoning light so max_tokens isn't burned before
+        # the actual answer is produced.
+        extra_kwargs = {}
+        if "gpt-oss" in self._model:
+            extra_kwargs["reasoning_effort"] = "low"
+
         try:
             response = self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
                 temperature=0.5,
                 max_tokens=max_tokens,
+                **extra_kwargs,
             )
             raw = response.choices[0].message.content or ""
-            return self._parse(raw, max_words=clamp_words, max_lines=clamp_lines)
+            parsed = self._parse(raw, max_words=clamp_words, max_lines=clamp_lines)
+            if not parsed.answer.strip():
+                return self._fallback_reply(
+                    portfolio_context=portfolio_context,
+                    reason="LLM returned an empty response.",
+                )
+            return parsed
         except Exception as exc:
             return self._fallback_reply(
                 portfolio_context=portfolio_context,
