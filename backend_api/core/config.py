@@ -40,7 +40,7 @@ class Settings:
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
     hf_api_token: str = os.getenv("HF_API_TOKEN", "")
 
