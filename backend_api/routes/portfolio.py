@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from backend_api.core.config import settings
 from backend_api.core.security import get_current_user
 from backend_api.database.token_store import (
     get_all_baskets,
@@ -691,6 +692,14 @@ def news_digest(current_user: dict = Depends(get_current_user)) -> NewsDigestRes
             articles = cached.get("data") if cached else None
             if not articles:
                 continue
+
+            if settings.hf_api_token and any(a.get("sentiment_label") is None for a in articles):
+                scores = analyze_sentiment_batch([a["title"] for a in articles])
+                for article, score in zip(articles, scores):
+                    if score:
+                        article["sentiment_label"] = score["label"]
+                        article["sentiment_score"] = score["score"]
+                upsert_news_cache(symbol=symbol, data=articles)
 
             items.append(
                 SymbolNews(
