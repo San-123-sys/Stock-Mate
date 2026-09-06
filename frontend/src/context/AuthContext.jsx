@@ -20,36 +20,23 @@ export function AuthProvider({ children }) {
     setUser({ userId: data.user_id, email });
   };
 
+  // Note: these do NOT touch `loading` — that flag only gates the initial
+  // session check in App's route guards. Toggling it here unmounts LoginPage
+  // mid-request and wipes its error state. Callers track their own submit state.
   const login = useCallback(async ({ email, password }) => {
-    setLoading(true);
-    try {
-      const data = await authAPI.login({ email, password });
-      _persist(data, email);
-      return data;
-    } finally {
-      setLoading(false);
-    }
+    const data = await authAPI.login({ email, password });
+    _persist(data, email);
+    return data;
   }, []);
 
   const register = useCallback(async ({ email, password, displayName }) => {
-    setLoading(true);
-    try {
-      const data = await authAPI.register({ email, password, display_name: displayName });
-      _persist(data, email);
-      return data;
-    } finally {
-      setLoading(false);
-    }
+    const data = await authAPI.register({ email, password, display_name: displayName });
+    _persist(data, email);
+    return data;
   }, []);
 
   const forgotPassword = useCallback(async (email) => {
-    setLoading(true);
-    try {
-      const data = await authAPI.forgotPassword(email);
-      return data;
-    } finally {
-      setLoading(false);
-    }
+    return authAPI.forgotPassword(email);
   }, []);
 
   const logout = useCallback(() => {

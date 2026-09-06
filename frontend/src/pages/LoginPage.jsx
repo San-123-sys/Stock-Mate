@@ -8,7 +8,8 @@ import { ArrowRight, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 const ease = [0.25, 0.1, 0.25, 1];
 
 export default function LoginPage() {
-  const { login, register, forgotPassword, loading } = useAuth();
+  const { login, register, forgotPassword } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const [mode, setMode] = useState("login"); // "login" | "register" | "forgot"
   const [email, setEmail] = useState("");
@@ -30,11 +31,14 @@ export default function LoginPage() {
         setError("Email is required");
         return;
       }
+      setSubmitting(true);
       try {
         await forgotPassword(email.trim());
         setResetSent(true);
       } catch (err) {
         setError(err.message || "Failed to send reset link.");
+      } finally {
+        setSubmitting(false);
       }
       return;
     }
@@ -47,6 +51,7 @@ export default function LoginPage() {
       setError("Password must be at least 6 characters");
       return;
     }
+    setSubmitting(true);
     try {
       if (isRegister) {
         await register({ email: email.trim(), password, displayName: displayName.trim() || undefined });
@@ -56,6 +61,8 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err) {
       setError(err.message || (isRegister ? "Registration failed" : "Login failed"));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -249,10 +256,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-[var(--color-brand)] text-white font-semibold text-[15px] hover:bg-[var(--color-brand-light)] hover:-translate-y-0.5 disabled:transform-none disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 shadow-xl shadow-[var(--color-brand)]/20 mt-8"
             >
-              {loading ? (
+              {submitting ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
