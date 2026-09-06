@@ -56,6 +56,26 @@ class MarketDataService:
             logger.warning("Failed to parse close series for %s: %s", base_symbol, exc)
             return {}
 
+    def fetch_close_history(self, base_symbol: str, years: int = 3) -> dict[str, float]:
+        """
+        Longer daily close history than fetch_close_series (which caps at 1Y),
+        for portfolio optimization. Returns {"YYYY-MM-DD": close} or {} on failure.
+        """
+        yf_period = "5y" if years > 2 else "2y"
+        hist = self._history_for_symbol(base_symbol, yf_period)
+        if hist is None:
+            return {}
+        try:
+            series: dict[str, float] = {}
+            for ts, row in hist.iterrows():
+                close = row.get("Close")
+                if close is not None:
+                    series[ts.strftime("%Y-%m-%d")] = float(close)
+            return series
+        except Exception as exc:
+            logger.warning("Failed to parse close history for %s: %s", base_symbol, exc)
+            return {}
+
     def fetch_index_close_series(self, ticker_symbol: str, period: str) -> dict[str, float]:
         """For index/raw tickers that already include their own symbol format (e.g. ^NSEI)."""
         if not _HAS_YFINANCE:

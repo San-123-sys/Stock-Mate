@@ -237,6 +237,13 @@ def calculate_sip_for_goal(
 # Tax Analysis Helper
 # ---------------------------------------------------------------------------
 
+# Equity capital-gains tax, India (Budget 2024, FY25+):
+# LTCG 12.5% on gains above a ₹1.25L annual exemption; STCG a flat 20%.
+LTCG_RATE_PCT = 12.5
+STCG_RATE_PCT = 20.0
+LTCG_EXEMPTION_INR = 125_000
+
+
 def build_tax_analysis(
     *,
     holdings: list[dict],
@@ -249,9 +256,9 @@ def build_tax_analysis(
     """
     if not holdings:
         return {
-            "ltcg_threshold_inr": 100_000,
-            "ltcg_rate_pct": 10.0,
-            "stcg_rate_pct": 15.0,
+            "ltcg_threshold_inr": LTCG_EXEMPTION_INR,
+            "ltcg_rate_pct": LTCG_RATE_PCT,
+            "stcg_rate_pct": STCG_RATE_PCT,
             "unrealized_gains": 0.0,
             "unrealized_losses": 0.0,
             "net_unrealized": 0.0,
@@ -290,9 +297,9 @@ def build_tax_analysis(
     harvesting_candidates = sorted(loss_rows, key=lambda r: r["pnl"])[:3]
 
     return {
-        "ltcg_threshold_inr": 100_000,
-        "ltcg_rate_pct": 10.0,
-        "stcg_rate_pct": 15.0,
+        "ltcg_threshold_inr": LTCG_EXEMPTION_INR,
+        "ltcg_rate_pct": LTCG_RATE_PCT,
+        "stcg_rate_pct": STCG_RATE_PCT,
         "unrealized_gains": round(total_gains, 2),
         "unrealized_losses": round(total_losses, 2),
         "net_unrealized": round(total_gains + total_losses, 2),
@@ -300,8 +307,8 @@ def build_tax_analysis(
         "holdings_with_losses": sorted(loss_rows, key=lambda r: r["pnl"]),
         "tax_loss_harvesting_candidates": harvesting_candidates,
         "note": (
-            "Holdings held > 1 year: LTCG at 10% on gains above ₹1L. "
-            "Holdings held ≤ 1 year: STCG at 15%. "
+            "Holdings held > 1 year: LTCG at 12.5% on gains above the ₹1.25L annual exemption. "
+            "Holdings held ≤ 1 year: STCG at a flat 20% (Budget 2024). "
             "Exact holding periods require your broker's P&L report. Consult a CA for your specific situation."
         ),
     }

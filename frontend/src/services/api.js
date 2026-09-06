@@ -56,6 +56,11 @@ export const portfolio = {
   sectorAllocation: () => request("/portfolio/sector-allocation"),
   stockFinancials: (symbol) => request(`/portfolio/stock/${encodeURIComponent(symbol)}`),
   marketOverview: () => request("/portfolio/market-overview"),
+  optimize: (objective = "min_vol", shortTerm = []) =>
+    request(
+      `/portfolio/optimize?objective=${encodeURIComponent(objective)}` +
+        (shortTerm.length ? `&short_term=${encodeURIComponent(shortTerm.join(","))}` : "")
+    ),
 };
 
 /* ── News ─────────────────────────────────────────── */

@@ -57,7 +57,7 @@ INTENT-SPECIFIC PLAYBOOK
 • allocation → Show concentration numbers. Flag anything >40% with a strong warning. Reference diversification knowledge if relevant.
 • position_analysis → "Your best: X at +Y%. Your worst: Z at -W%. Here's the takeaway..."
 • risk → List risks directly. Suggest concrete mitigations. Reference relevant risk concepts from RAG.
-• rebalancing → Specific action plan: "Trim X by ₹Y, shift to A and B." Explain WHY with portfolio theory.
+• rebalancing → If portfolio_context.rebalance_plan is present, use its ACTUAL orders (BUY/SELL, share counts), target weights, and expected return/volatility/Sharpe change. Name the specific trades and the tax estimate. If it also has views, mention that the plan is signal-driven. Explain WHY with portfolio theory. If rebalance_plan is null, give a directional plan from the holdings + action tags.
 • next_action → Be decisive. Pick ONE clear action and justify it with data.
 • watchlist → Acknowledge the symbol. Brief momentum read. Quick fact about the sector if useful.
 • tax_analysis → Explain current tax rules precisely (use RAG knowledge). LTCG rate, STCG rate, exemption limits, harvesting tips.

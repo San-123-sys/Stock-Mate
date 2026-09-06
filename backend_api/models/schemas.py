@@ -293,3 +293,92 @@ class PriceAlertResponse(BaseModel):
     is_read: bool
     created_at: str | None = None
     triggered_at: str | None = None
+
+
+class FrontierPoint(BaseModel):
+    volatility: float
+    ret: float
+    sharpe: float
+
+
+class PortfolioStats(BaseModel):
+    expected_return: float
+    volatility: float
+    sharpe: float
+
+
+class OptimizedWeight(BaseModel):
+    symbol: str
+    current_pct: float
+    target_pct: float
+
+
+class RebalanceOrder(BaseModel):
+    symbol: str
+    action: Literal["BUY", "SELL"]
+    shares: int
+    price: float
+    est_value: float
+
+
+class TaxLine(BaseModel):
+    symbol: str
+    shares: int
+    realized_gain: float
+    term: Literal["long", "short"]
+
+
+class TaxImpact(BaseModel):
+    estimated_tax: float
+    realized_gain: float
+    ltcg_gain: float
+    stcg_gain: float
+    ltcg_taxable_gain: float
+    ltcg_exemption_inr: float = 125_000.0
+    ltcg_rate_pct: float = 12.5
+    stcg_rate_pct: float = 20.0
+    note: str
+
+
+class ProjectionPoint(BaseModel):
+    month: int
+    p5: float
+    p50: float
+    p95: float
+
+
+class PortfolioProjection(BaseModel):
+    points: list[ProjectionPoint] = []
+    var_95_1d_pct: float
+    cvar_95_1d_pct: float
+    var_95_1d_value: float
+    cvar_95_1d_value: float
+
+
+class SignalView(BaseModel):
+    symbol: str
+    action_tag: str
+    view_return_pct: float
+
+
+class OptimizeResponse(BaseModel):
+    user_id: str
+    linked: bool = False
+    objective: str
+    data_status: str | None = None
+    message: str
+    action_required: str | None = None
+    link_endpoint: str | None = None
+    frontier: list[FrontierPoint] = []
+    current_stats: PortfolioStats | None = None
+    optimized_stats: PortfolioStats | None = None
+    weights: list[OptimizedWeight] = []
+    orders: list[RebalanceOrder] = []
+    leftover_cash: float | None = None
+    total_value: float | None = None
+    note: str | None = None
+    tax: TaxImpact | None = None
+    tax_lines: list[TaxLine] = []
+    projection_current: PortfolioProjection | None = None
+    projection_optimized: PortfolioProjection | None = None
+    views: list[SignalView] = []

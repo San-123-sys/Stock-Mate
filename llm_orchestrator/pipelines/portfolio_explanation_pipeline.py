@@ -187,6 +187,7 @@ class PortfolioExplanationPipeline:
             total_current_value=total_current_value,
             total_pnl=portfolio_summary.get("total_pnl", 0.0),
             total_pnl_pct=portfolio_summary.get("total_pnl_pct", 0.0),
+            include_rebalance=(detected_intent == "rebalancing"),
         )
 
         confidence_score = estimate_confidence_score(

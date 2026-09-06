@@ -12,6 +12,34 @@ from llm_orchestrator.utils.portfolio_analytics import build_portfolio_analytics
 from llm_orchestrator.utils.proactive_insights import generate_proactive_insights
 
 
+def _build_rebalance_plan(holdings: list[dict]) -> dict | None:
+    """
+    Signal-driven (Black-Litterman) optimization summary, compact enough to drop
+    into the LLM context so it can narrate concrete rebalance orders. Best-effort.
+    """
+    try:
+        from backend_api.services.optimizer_service import optimizer_service
+
+        result = optimizer_service.optimize(holdings=holdings, objective="black_litterman")
+        if not result:
+            return None
+        return {
+            "objective": "black_litterman",
+            "note": result.get("note"),
+            "current_stats": result.get("current_stats"),
+            "optimized_stats": result.get("optimized_stats"),
+            "views": result.get("views", []),
+            "orders": result.get("orders", [])[:12],
+            "target_weights": [
+                {"symbol": w["symbol"], "target_pct": w["target_pct"]}
+                for w in result.get("weights", [])
+            ],
+            "estimated_tax": (result.get("tax") or {}).get("estimated_tax"),
+        }
+    except Exception:
+        return None
+
+
 def build_portfolio_context(
     *,
     user_id: str,
@@ -23,6 +51,7 @@ def build_portfolio_context(
     total_current_value: float = 0.0,
     total_pnl: float = 0.0,
     total_pnl_pct: float = 0.0,
+    include_rebalance: bool = False,
 ) -> dict:
     """
     Returns a rich context dict fed into the system prompt and LLM.
@@ -112,10 +141,13 @@ def build_portfolio_context(
         n_results=3,
     )
 
+    rebalance_plan = _build_rebalance_plan(holdings) if include_rebalance else None
+
     return {
         "user_id": user_id,
         "account_id": account_id,
         "detected_intent": detected_intent,
+        "rebalance_plan": rebalance_plan,
         "portfolio": {
             "total_invested": round(total_invested, 2),
             "total_current_value": round(total_current_value, 2),

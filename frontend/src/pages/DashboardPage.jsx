@@ -18,6 +18,7 @@ import {
   BarChart3,
   BellPlus,
   Share2,
+  Scale,
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { portfolio, chat, alerts } from "../services/api";
@@ -191,6 +192,40 @@ function OnboardingCompleteCard() {
       <p className="text-[15px] text-[var(--color-text-primary)] leading-relaxed">
         You are fully set up. Your app is now running in full-power mode.
       </p>
+    </motion.div>
+  );
+}
+
+function OptimizeTeaser({ data }) {
+  if (!data || data.data_status !== "live" || !data.optimized_stats || !data.current_stats) return null;
+  const curSharpe = data.current_stats.sharpe;
+  const optSharpe = data.optimized_stats.sharpe;
+  const trades = (data.orders || []).length;
+  if (optSharpe <= curSharpe + 0.05 && trades === 0) return null;
+  return (
+    <motion.div
+      variants={itemVariants}
+      className="glass-card p-6 md:p-8 border border-[var(--color-brand)]/25 bg-[var(--color-brand)]/5"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Scale size={16} className="text-[var(--color-brand)]" />
+            <h2 className="text-xs font-bold uppercase tracking-[2px] text-[var(--color-brand)]">Portfolio can be optimized</h2>
+          </div>
+          <p className="text-[15px] text-[var(--color-text-primary)] leading-relaxed">
+            Rebalancing toward the efficient frontier could lift your Sharpe from{" "}
+            <strong>{curSharpe.toFixed(2)}</strong> to <strong>{optSharpe.toFixed(2)}</strong>
+            {trades > 0 ? ` in ${trades} trade${trades === 1 ? "" : "s"}.` : "."}
+          </p>
+        </div>
+        <Link
+          to="/optimize"
+          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-brand)] text-white text-sm font-medium"
+        >
+          Open optimizer <ArrowRight size={15} />
+        </Link>
+      </div>
     </motion.div>
   );
 }
@@ -664,6 +699,8 @@ export default function DashboardPage() {
   const [marketOverview, setMarketOverview] = useState(null);
   const [marketOverviewLoading, setMarketOverviewLoading] = useState(true);
 
+  const [optimizeTeaser, setOptimizeTeaser] = useState(null);
+
   const [selectedSymbol, setSelectedSymbol] = useState(null);
   const [stockFinancials, setStockFinancials] = useState(null);
   const [stockFinancialsLoading, setStockFinancialsLoading] = useState(false);
@@ -742,6 +779,20 @@ export default function DashboardPage() {
     fetchSectorAllocation();
     fetchMarketOverview();
   }, []);
+
+  // Lazy, non-blocking: only after live holdings are known and worth optimizing.
+  useEffect(() => {
+    if (portfolioData?.data_status !== "live") return;
+    if ((portfolioData?.holdings?.length ?? 0) < 3) return;
+    let cancelled = false;
+    portfolio
+      .optimize("min_vol")
+      .then((res) => !cancelled && setOptimizeTeaser(res))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [portfolioData?.data_status, portfolioData?.holdings?.length]);
 
   const handleBenchmarkPeriodChange = (period) => {
     setBenchmarkPeriod(period);
@@ -992,6 +1043,8 @@ export default function DashboardPage() {
             <OnboardingChecklist items={checklistItems} demoMode={demoMode} onToggleDemo={handleToggleDemo} />
           )}
           {!showOnboarding && onboardingComplete && <OnboardingCompleteCard />}
+
+          <OptimizeTeaser data={optimizeTeaser} />
 
           <MarketOverviewWidget data={effectiveMarketOverview} loading={marketOverviewLoading} />
 

@@ -1,6 +1,6 @@
 # Stock-Mate
 
-Stock-Mate is an AI-powered portfolio dashboard that connects to your Zerodha and/or Upstox brokerage accounts and gives you a live, consolidated view of your holdings, an AI chat assistant for portfolio questions, and market analytics — performance vs. NIFTY 50 (with a "what if you'd invested in NIFTY instead" comparison), sector allocation with concentration alerts, a sector- and beta-aware portfolio health score with a shareable PNG report card, an India VIX Fear & Greed gauge, per-stock fundamentals, a market overview widget, a news digest, themed stock baskets, price alerts, and more.
+Stock-Mate is an AI-powered portfolio dashboard that connects to your Zerodha and/or Upstox brokerage accounts and gives you a live, consolidated view of your holdings, an AI chat assistant for portfolio questions, a portfolio optimizer that turns your real holdings into concrete rebalance orders, and market analytics — performance vs. NIFTY 50 (with a "what if you'd invested in NIFTY instead" comparison), sector allocation with concentration alerts, a sector- and beta-aware portfolio health score with a shareable PNG report card, an India VIX Fear & Greed gauge, per-stock fundamentals, a market overview widget, a news digest, themed stock baskets, price alerts, and more.
 
 ## How It Works
 
@@ -10,13 +10,14 @@ Stock-Mate is an AI-powered portfolio dashboard that connects to your Zerodha an
 4. **Stock financials** — click any holding to see its fundamentals (P/E, market cap, dividend yield, 52-week range, beta) alongside your own position in that stock
 5. **News & baskets** — a News page shows the latest headlines for your top holdings, and a Baskets page groups stocks into curated themes (EV, Banking, IT Services, and more), highlighting which ones you already hold
 6. **AI chat** — an LLM-backed assistant (Groq or OpenAI) answers portfolio questions with buy/hold/trim guidance and proactive insights, with portfolio-aware suggested prompts to get started
-7. **Price alerts** — set a target price and direction (above/below) for any stock from its fundamentals panel; a background job checks prices every 15 minutes and notifies you via a bell icon in the nav bar and a dedicated "My Alerts" page
+7. **Portfolio optimizer** — an Optimize page runs mean-variance optimization on your live holdings (Min Risk, Max Sharpe, or signal-driven Black-Litterman) and returns concrete BUY/SELL share orders, an efficient-frontier chart, a 12-month Monte Carlo projection with VaR/CVaR, and a capital-gains tax estimate on the sells; asking the chat assistant "how should I rebalance?" runs the same engine
+8. **Price alerts** — set a target price and direction (above/below) for any stock from its fundamentals panel; a background job checks prices every 15 minutes and notifies you via a bell icon in the nav bar and a dedicated "My Alerts" page
 
 ## Architecture
 
 | Component | Description |
 |---|---|
-| `backend_api` | FastAPI REST API — auth, portfolio, Zerodha OAuth, chat, market data |
+| `backend_api` | FastAPI REST API — auth, portfolio, Zerodha OAuth, chat, market data, portfolio optimizer (`services/optimizer_service.py`) |
 | `llm_orchestrator` | LLM reasoning layer behind the chat assistant |
 | `frontend` | React + Vite web dashboard |
 
@@ -35,6 +36,7 @@ Data is stored in a local SQLite database (`backend_api/database/backend.db`, cr
 - **News digest** — latest headlines for your top holdings (or a default watchlist if unlinked), fetched from yfinance and cached daily, each headline scored positive/negative/neutral via FinBERT
 - **Themed stock baskets** — curated stock groupings by theme (EV, Banking, IT Services, Pharma, FMCG, and more), with your own holdings highlighted
 - **AI chat assistant** — natural-language portfolio Q&A with action tags (Hold/Trim/Add/Watch/Rebalance), proactive insights, and portfolio-aware suggested prompts (diversification, riskiest holding, replacement ideas, sector exposure) to get the conversation started
+- **Portfolio optimizer** — mean-variance optimization on your live merged holdings with Ledoit-Wolf covariance shrinkage and per-name weight caps; three objectives (Min Risk, Max Sharpe, and signal-driven **Black-Litterman** that turns the chat assistant's Add/Trim views into return views); outputs an interactive efficient frontier, current-vs-optimized stats, discrete BUY/SELL **share orders**, a 12-month Monte Carlo projection cone with 1-day VaR/CVaR, and a **capital-gains tax estimate** (STCG 20% / LTCG 12.5% over the ₹1.25L exemption) with a per-holding "held ≤ 1 year" toggle. The chat `rebalancing` intent runs the same optimizer and narrates the orders. Powered by `PyPortfolioOpt` + yfinance history; not investment advice.
 - **Zerodha & Upstox account linking** — OAuth-based linking/unlinking for both brokers, multiple accounts per broker, primary account selection, holdings from every connected broker merged into one portfolio and badged by source
 - **Price alerts** — per-stock target-price alerts with an above/below direction, one active alert per stock+direction (creating a new one replaces the old), checked automatically every 15 minutes against live prices, with a nav-bar bell notification (unread count badge, dismiss/reset actions) and a "My Alerts" management page
 

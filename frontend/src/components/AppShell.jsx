@@ -16,6 +16,7 @@ import {
   Bell,
   Check,
   RotateCcw,
+  Scale,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +25,7 @@ import { alerts } from "../services/api";
 
 const NAV_ITEMS = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Portfolio" },
+  { to: "/optimize", icon: Scale, label: "Optimize" },
   { to: "/chat", icon: MessageCircle, label: "Assistant" },
   { to: "/news", icon: Newspaper, label: "News" },
   { to: "/baskets", icon: LayoutGrid, label: "Baskets" },
